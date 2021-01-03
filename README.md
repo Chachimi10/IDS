@@ -25,5 +25,11 @@ ids.rules contains a sample of rules that can be used by the program. It's the f
 The populate.c, populate.h, ids.rule and parts of main.c file were written by Henallux teachers
 The rest of the main.c file was written by Riccardo B. and Charles D.
 
+How to install : 
+Clone the repository on your computer
+Compilate the program using your favorite compilator. Make sure to include all the files : main.c populate.c populate.h
+Once done, execute the program. Don't forget to include the rule.ids file in arguments. 
+Enjoy !
+
 
 
