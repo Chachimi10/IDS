@@ -47,7 +47,11 @@ void rule_matcher(Rule *rules_ds, ETHER_Frame *frame)
                 printf("\nProtocol : TCP\n");
                 printf("\n Source Port TCP : %d \n", frame->data.data_tcp.source_port);
                 printf("\nDestination Port TCP : %d \n", frame->data.data_tcp.destination_port);
-
+                printf("\nPayload : %s \n", frame->data.data_tcp.data);
+                if (frame->data.data_tcp.data != NULL) {
+                        pack_protocol = "http";
+                        
+                }
                
         
         }
@@ -65,6 +69,7 @@ void rule_matcher(Rule *rules_ds, ETHER_Frame *frame)
 
                 
         }
+        
         
         printf("\nSource IP : %s \n", frame->data.source_ip);
         printf("\nDestination IP : %s \n", frame->data.destination_ip);
@@ -87,63 +92,75 @@ void rule_matcher(Rule *rules_ds, ETHER_Frame *frame)
                                         if((strcmp(rules_ds->destination_ip, "any") == 0)|| (strcmp(rules_ds->destination_ip, frame->data.destination_ip) == 0)){
                                                 
                                                 if( (strcmp(rules_ds->destination_port, "any") == 0) || (strcmp(rules_ds->destination_port, pack_dport) == 0)){
-                                                        const char *content_option = rules_ds->options;
-                                                        const char *content_option2 = rules_ds->options2;
-                                                        const char *delimiter = "\"";
-                                                        char *report_syslog = NULL;
-                                                        char *alert_http = NULL;
-                                                        char *start, *end;
+                                                        if (pack_protocol != "http"){
+                                                                const char *content_option = rules_ds->options;
+                
+                                                                const char *delimiter = "\"";
+                                                                char *target = NULL;
+                                                                
+                                                                char *start, *end;
 
-                                                        if ( start = strstr( content_option2, delimiter ) )
-                                                        {
-                                                                start += strlen( delimiter );
-                                                                if ( end = strstr( start, delimiter ) )
+                                                                if ( start = strstr( content_option, delimiter ) )
                                                                 {
-                                                                alert_http = ( char * )malloc( end - start + 1 );
-                                                                memcpy( alert_http, start, end - start );
-                                                                alert_http[end - start] = '\0';
-
-
-                                                                printf("=> Malware.exe");
-                                                                printf("%s", alert_http);
-                                                                }
-                                                                return 0;
-                                                        }
-
-
-                                                        /*if ( start = strstr( content_option, delimiter ) )
-                                                        {
-                                                                start += strlen( delimiter );
-                                                                if ( end = strstr( start, delimiter ) )
-                                                                {
-                                                                report_syslog = ( char * )malloc( end - start + 1 );
-                                                                memcpy( report_syslog, start, end - start );
-                                                                report_syslog[end - start] = '\0';
+                                                                        start += strlen( delimiter );
+                                                                        if ( end = strstr( start, delimiter ) )
+                                                                        {
+                                                                        target = ( char * )malloc( end - start + 1 );
+                                                                        memcpy( target, start, end - start );
+                                                                        target[end - start] = '\0';
+                                                                        }
+                                                                        
                                                                 }
                                                                 
-                                                        }*/
-
+                                                                printf("%s\n", target);
+                                                                openlog("IR209", LOG_PID|LOG_CONS, LOG_USER);
+                                                                syslog(LOG_INFO, target);
+                                                                closelog();  
+                                                        } else {
+                                                                if (pack_protocol = "http") {
+                                                                        const char *content_option2 = rules_ds->options2;
+                                                                        const char *payload = frame->data.data_tcp.data;
+                                                                        const char *delimiter = "\"";
+                                                                        char *target = NULL;
+                                                                        
+                                                                        char *start, *end;
+                                                                        if ( start = strstr( content_option2, delimiter ) )
+                                                                        {
+                                                                                start += strlen( delimiter );
+                                                                                if ( end = strstr( start, delimiter ) )
+                                                                                {
+                                                                                        target = ( char * )malloc( end - start + 1 );
+                                                                                        memcpy( target, start, end - start );
+                                                                                        target[end - start] = '\0';
+                                                                                        if(strchr(payload, "malware.exe") != NULL) {
+                                                                                                printf("%s\n", target);
+                                                                                                openlog("IR209", LOG_PID|LOG_CONS, LOG_USER);
+                                                                                                syslog(LOG_INFO, target);
+                                                                                                closelog(); 
+                                                                                                
+                                                                                        } else {
+                                                                                                printf("Pas de malwere.exe");
+                                                                                                
+                                                                                        }
+                                                                                        
+                                                                                }
+                                                                                
+                                                                                        
+                                                                        }
+                                                                }
+                                                        }
                                                         
-                                                        printf("%s\n", report_syslog);
-                                                        openlog("IR209", LOG_PID|LOG_CONS, LOG_USER);
-                                                        syslog(LOG_INFO, report_syslog);
-                                                        closelog();
                                                 }
                                         }
                                 }
                                 
                         }
                 }
-                //printf("%s | %s | %s | %s | %s | %s | %s | %s \n", rules_ds->action, rules_ds->protocol, rules_ds->source_ip, rules_ds->source_port, rules_ds->in_out, rules_ds->destination_ip, rules_ds->destination_port, rules_ds->options);
                 rules_ds = rules_ds->next;
         } 
 
-        
-
-
         printf("------------------\n");
-
-        
+       
 }
 
 
@@ -210,15 +227,18 @@ void my_packet_handler(u_char *args, const struct pcap_pkthdr *header, const u_c
         ETHER_Frame custom_frame;
         populate_packet_ds(header, packet, &custom_frame);
         rule_matcher(first, &custom_frame);
+        
 }
 
 int main(int argc, char *argv[]) 
 {
         // Carte réseau à lire
         char *device = "eth0";
+        
 
         // Fichier avec les règles à lire
         char *file_name = argv[1];
+
         // Verb du fichier lû
         printf("\n Chemin du fichier de règle : %s", file_name);
 
@@ -277,9 +297,9 @@ int main(int argc, char *argv[])
         pcap_t *handle;
 
         handle = pcap_create(device,error_buffer);
-        pcap_set_timeout(handle,100);
+        pcap_set_timeout(handle,10);
         pcap_activate(handle);
-        int total_packet_count = 100;
+        int total_packet_count = 465465;
 
         pcap_loop(handle, total_packet_count, my_packet_handler, NULL);
 

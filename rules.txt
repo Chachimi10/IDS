@@ -1,0 +1,4 @@
+alert http any any -> any any (msg:"shell_attack"; content:"malware.exe";)
+alert tcp any any -> any 8888 (msg:"backdoor_attack";)
+alert udp any any -> any 9999 (msg:"UDP_traffic_bind_port_is_forbidden";)
+alert ftp any any -> any any (msg:"Unsecure_protocol_use_detected";)

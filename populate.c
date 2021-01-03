@@ -35,7 +35,8 @@ int populate_packet_ds(const struct pcap_pkthdr *header, const u_char *packet, E
         const struct sniff_tcp *tcp; /* The TCP header */
         const struct sniff_udp *udp; /* The UDP header */
         unsigned char *payload; /* Packet payload */
-
+        
+     
         u_int size_ip;
         u_int size_tcp;
 
@@ -51,7 +52,7 @@ int populate_packet_ds(const struct pcap_pkthdr *header, const u_char *packet, E
                 snprintf(dst_mac_address+(x*2),ETHER_ADDR_LEN_STR,
                         "%02x",ethernet->ether_dhost[x]);
         }
-
+        
         strcpy(custom_frame->source_mac,src_mac_address);
         strcpy(custom_frame->destination_mac, dst_mac_address);
 
@@ -82,13 +83,14 @@ int populate_packet_ds(const struct pcap_pkthdr *header, const u_char *packet, E
                 custom_packet.protocol = ip->ip_p;
 
                 size_ip = IP_HL(ip)*4;
+               
 
                 if (size_ip < 20) {
                         printf("   * Invalid IP header length: %u bytes\n", size_ip);
                         return ERROR;
                 }
-
-
+                
+             
 
                 if((int)ip->ip_p==UDP_PROTOCOL)
                 {
@@ -115,7 +117,10 @@ int populate_packet_ds(const struct pcap_pkthdr *header, const u_char *packet, E
                         }
                         payload = (u_char *)(packet + SIZE_ETHERNET + size_ip + size_tcp);
 
+                        
+
                         int payload_length = (header->caplen)-SIZE_ETHERNET-size_ip-size_tcp;
+                        
                         custom_segment.source_port = ntohs(tcp->th_sport);
                         custom_segment.destination_port = ntohs(tcp->th_dport);
                         custom_segment.th_flag = (int)tcp->th_flags;
